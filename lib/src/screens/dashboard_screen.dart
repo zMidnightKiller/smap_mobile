@@ -4,14 +4,37 @@ import 'package:provider/provider.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../providers/auth_provider.dart';
+import '../providers/dashboard_provider.dart';
 import '../theme/app_theme.dart';
 
-class DashboardScreen extends StatelessWidget {
+class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
+
+  @override
+  State<DashboardScreen> createState() => _DashboardScreenState();
+}
+
+class _DashboardScreenState extends State<DashboardScreen> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final auth = Provider.of<AuthProvider>(context, listen: false);
+      Provider.of<DashboardProvider>(context, listen: false).fetchResumo(auth.token!, auth.baseUrl);
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     final auth = Provider.of<AuthProvider>(context);
+    final dashboard = Provider.of<DashboardProvider>(context);
+    final resumo = dashboard.resumo;
+
+    final String faturamento = resumo?['faturamento_total'] != null 
+        ? 'R\$ ${resumo!['faturamento_total'].toStringAsFixed(2)}' 
+        : 'R\$ 0,00';
+    
+    final int qtdVendas = resumo?['total_vendas'] ?? 0;
 
     return Scaffold(
       body: Stack(
@@ -33,82 +56,48 @@ class DashboardScreen extends StatelessWidget {
           ),
           
           SafeArea(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(24.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildHeader(context, auth),
-                  const SizedBox(height: 32),
-                  _buildWelcomeCard(auth).animate().fadeIn().slideY(begin: 0.1),
-                  const SizedBox(height: 40),
-                  
-                  Text(
-                    'Visão Geral',
-                    style: GoogleFonts.outfit(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 0.5,
-                    ),
-                  ).animate().fadeIn(delay: 200.ms),
-                  
-                  const SizedBox(height: 20),
-                  
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _buildStatCard(
-                          'Vendas Hoje',
-                          'R\$ 1.250',
-                          Icons.insights_rounded,
-                          SmapTheme.primaryColor,
-                          '↑ 12%',
-                        ).animate().fadeIn(delay: 300.ms).slideX(begin: -0.1),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: _buildStatCard(
-                          'Pendências',
-                          '03',
-                          Icons.assignment_late_outlined,
-                          SmapTheme.secondaryColor,
-                          'Alerta',
-                        ).animate().fadeIn(delay: 400.ms).slideX(begin: 0.1),
-                      ),
+            child: RefreshIndicator(
+              onRefresh: () => dashboard.fetchResumo(auth.token!, auth.baseUrl),
+              child: SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildHeader(context, auth),
+                    const SizedBox(height: 32),
+                    _buildBalanceCard(context, auth, faturamento).animate().fadeIn().scale(begin: const Offset(0.9, 0.9)),
+                    const SizedBox(height: 32),
+                    
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'Métricas Hoje',
+                          style: GoogleFonts.outfit(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        Text(
+                          '$qtdVendas vendas',
+                          style: TextStyle(color: SmapTheme.primaryColor, fontWeight: FontWeight.bold),
+                        ),
+                      ],
+                    ).animate().fadeIn(delay: 200.ms),
+                    
+                    const SizedBox(height: 16),
+                    
+                    if (dashboard.isLoading)
+                      const Center(child: CircularProgressIndicator())
+                    else ...[
+                      _buildTransactionItem('Vendas Totais', 'Hoje', 'R\$ $faturamento', Icons.shopping_bag_rounded, SmapTheme.primaryColor),
+                      _buildTransactionItem('Ticket Médio', 'Hoje', 'R\$ ${(qtdVendas > 0 ? (resumo?['faturamento_total'] / qtdVendas) : 0).toStringAsFixed(2)}', Icons.analytics_rounded, SmapTheme.secondaryColor),
                     ],
-                  ),
-                  
-                  const SizedBox(height: 40),
-                  
-                  Text(
-                    'Acesso Rápido',
-                    style: GoogleFonts.outfit(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ).animate().fadeIn(delay: 500.ms),
-                  
-                  const SizedBox(height: 20),
-                  
-                  _buildQuickAction(
-                    'Nova Venda',
-                    'Abertura de ticket rápido',
-                    Icons.add_shopping_cart_rounded,
-                    0,
-                  ),
-                  _buildQuickAction(
-                    'Fluxo de Caixa',
-                    'Verificar entradas e saídas',
-                    Icons.account_balance_wallet_rounded,
-                    1,
-                  ),
-                  _buildQuickAction(
-                    'Inventário',
-                    'Gestão de estoque em tempo real',
-                    Icons.inventory_2_outlined,
-                    2,
-                  ),
-                ],
+                    
+                    const SizedBox(height: 40),
+                  ],
+                ),
               ),
             ),
           ),
@@ -119,93 +108,176 @@ class DashboardScreen extends StatelessWidget {
 
   Widget _buildHeader(BuildContext context, AuthProvider auth) {
     return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Column(
+        CircleAvatar(
+          radius: 28,
+          backgroundColor: SmapTheme.primaryColor.withValues(alpha: 0.2),
+          child: const Icon(Icons.person_outline_rounded, color: SmapTheme.primaryColor, size: 30),
+        ),
+        const SizedBox(width: 16),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Olá, ${auth.config?['nome'] ?? 'Admin'}!',
+                style: GoogleFonts.outfit(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+              Text(
+                'Bem-vindo de volta',
+                style: TextStyle(color: SmapTheme.textSecondaryColor, fontSize: 14),
+              ),
+            ],
+          ),
+        ),
+        Stack(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.05),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+              ),
+              child: const Icon(Icons.notifications_none_rounded, color: Colors.white, size: 26),
+            ),
+            Positioned(
+              right: 12,
+              top: 10,
+              child: Container(
+                width: 8,
+                height: 8,
+                decoration: const BoxDecoration(
+                  color: SmapTheme.secondaryColor,
+                  shape: BoxShape.circle,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ],
+    ).animate().fadeIn().slideX(begin: -0.1);
+  }
+
+  Widget _buildBalanceCard(BuildContext context, AuthProvider auth, String faturamento) {
+    return Container(
+      width: double.infinity,
+      decoration: SmapTheme.gradientDecoration(),
+      child: Padding(
+        padding: const EdgeInsets.all(28.0),
+        child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Dashboard',
+              'FATURAMENTO HOJE',
               style: GoogleFonts.outfit(
-                fontSize: 28,
-                fontWeight: FontWeight.w900,
-                color: Colors.white,
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: Colors.white.withValues(alpha: 0.8),
+                letterSpacing: 1.5,
               ),
             ),
-            Text(
-              'Bem-vindo de volta',
-              style: TextStyle(color: SmapTheme.textSecondaryColor, fontSize: 14),
-            ),
-          ],
-        ),
-        Container(
-          decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.05),
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
-          ),
-          child: IconButton(
-            onPressed: () => auth.logout().then((_) {
-              Navigator.pushReplacementNamed(context, '/login');
-            }),
-            icon: const Icon(Icons.logout_rounded, color: SmapTheme.secondaryColor),
-          ),
-        ),
-      ],
-    ).animate().fadeIn().slideY(begin: -0.2);
-  }
-
-  Widget _buildWelcomeCard(AuthProvider auth) {
-    return Container(
-      width: double.infinity,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(32),
-        gradient: LinearGradient(
-          colors: [
-            SmapTheme.primaryColor.withValues(alpha: 0.8),
-            SmapTheme.secondaryColor.withValues(alpha: 0.8),
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: SmapTheme.primaryColor.withValues(alpha: 0.3),
-            blurRadius: 30,
-            offset: const Offset(0, 15),
-          ),
-        ],
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(32),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
-          child: Padding(
-            padding: const EdgeInsets.all(28.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            const SizedBox(height: 8),
+            Row(
               children: [
-                const Icon(Icons.auto_awesome_rounded, color: Colors.white, size: 28),
-                const SizedBox(height: 20),
                 Text(
-                  'Empresa: ${auth.config?['nome'] ?? 'Loja SMAP'}',
+                  faturamento,
                   style: GoogleFonts.outfit(
-                    fontSize: 24,
+                    fontSize: 32,
                     fontWeight: FontWeight.bold,
                     color: Colors.white,
                   ),
                 ),
-                const SizedBox(height: 8),
-                const Text(
-                  'Plano Premium Ativo • Tudo em dia',
-                  style: TextStyle(color: Colors.white70),
+                const SizedBox(width: 12),
+                Icon(Icons.visibility_rounded, color: Colors.white.withValues(alpha: 0.5), size: 20),
+              ],
+            ),
+            const SizedBox(height: 32),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                _buildActionButton(Icons.add_shopping_cart_rounded, 'Vender', onTap: () => Navigator.pushNamed(context, '/products')),
+                _buildActionButton(Icons.payments_rounded, 'Receber', onTap: () {}),
+                _buildActionButton(Icons.sync_rounded, 'Sinc', onTap: () {}),
+                _buildActionButton(Icons.more_horiz_rounded, 'Mais', onTap: () {}),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildActionButton(IconData icon, String label, {VoidCallback? onTap}) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Column(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.15),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(icon, color: Colors.white, size: 24),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            label,
+            style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w500),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTransactionItem(String title, String subtitle, String amount, IconData icon, Color color) {
+    final isNegative = amount.contains('-');
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(12),
+      decoration: SmapTheme.glassDecoration(opacity: 0.03),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Icon(icon, color: color, size: 24),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                ),
+                Text(
+                  subtitle,
+                  style: TextStyle(color: SmapTheme.textSecondaryColor, fontSize: 12),
                 ),
               ],
             ),
           ),
-        ),
+          Text(
+            amount,
+            style: GoogleFonts.outfit(
+              fontWeight: FontWeight.bold,
+              fontSize: 16,
+              color: isNegative ? SmapTheme.errorColor : SmapTheme.accentColor,
+            ),
+          ),
+        ],
       ),
-    );
+    ).animate().fadeIn().slideX(begin: 0.1);
   }
 
   Widget _buildStatCard(String title, String value, IconData icon, Color color, String trend) {
@@ -240,13 +312,13 @@ class DashboardScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildQuickAction(String title, String subtitle, IconData icon, int index) {
+  Widget _buildQuickAction(String title, String subtitle, IconData icon, int index, {VoidCallback? onTap}) {
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          onTap: () {},
+          onTap: onTap,
           borderRadius: BorderRadius.circular(24),
           child: Container(
             padding: const EdgeInsets.all(20),

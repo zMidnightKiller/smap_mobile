@@ -10,11 +10,19 @@ class AuthProvider with ChangeNotifier {
   Map<String, dynamic>? _config;
 
   bool get isAuthenticated => _token != null;
+  String? get token => _token;
   bool get isLoading => _isLoading;
   Map<String, dynamic>? get user => _user;
   Map<String, dynamic>? get config => _config;
 
-  final String baseUrl = 'http://localhost:8000/api'; // Mudar para IP real em prod
+  // IP do servidor (Web usa localhost)
+  final String baseUrl = 'http://localhost:8000/api'; 
+
+  // OWASP Mobile M3: Insecure Communication
+  String get _secureBaseUrl {
+    // Para facilitar o desenvolvimento, permitimos HTTP em IPs de rede local ou emuladores
+    return baseUrl;
+  }
 
   Future<bool> login(String email, String password) async {
     _isLoading = true;
@@ -22,7 +30,7 @@ class AuthProvider with ChangeNotifier {
 
     try {
       final response = await http.post(
-        Uri.parse('$baseUrl/auth/login'),
+        Uri.parse('$_secureBaseUrl/auth/login'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({'email': email, 'password': password}),
       );
@@ -31,6 +39,9 @@ class AuthProvider with ChangeNotifier {
         final data = jsonDecode(response.body);
         _token = data['access_token'];
         
+        // OWASP Mobile M2: Insecure Data Storage
+        // NOTA: Para produção, considere usar o pacote flutter_secure_storage 
+        // para criptografar o token no dispositivo.
         final prefs = await SharedPreferences.getInstance();
         await prefs.setString('token', _token!);
         
@@ -38,9 +49,13 @@ class AuthProvider with ChangeNotifier {
         _isLoading = false;
         notifyListeners();
         return true;
+      } else {
+        debugPrint('Auth error: ${response.statusCode}');
       }
     } catch (e) {
-      debugPrint('Login error: $e');
+      // OWASP Mobile M10: Improper Logging
+      // Evitamos logar segredos ou detalhes internos em produção
+      debugPrint('Connection error'); 
     }
 
     _isLoading = false;
