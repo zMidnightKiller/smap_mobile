@@ -41,6 +41,13 @@ dependencies:
   flutter_spinkit: ^5.2.1
   intl: ^0.20.2
   flutter_animate: ^4.5.2
+  # Offline-first storage + security stack
+  flutter_secure_storage: ^9.2.2
+  sembast: ^3.7.4
+  sembast_web: ^2.4.1
+  connectivity_plus: ^6.1.0
+  crypto: ^3.0.6
+  path_provider: ^2.1.5
 
 dev_dependencies:
   flutter_test:
