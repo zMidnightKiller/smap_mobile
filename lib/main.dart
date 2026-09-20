@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'src/providers/auth_provider.dart';
 import 'src/providers/cart_provider.dart';
-import 'src/screens/loading_screen.dart';
+import 'src/screens/auth_gate.dart';
 import 'src/screens/login_screen.dart';
+import 'src/screens/home_screen.dart';
 import 'src/providers/product_provider.dart';
 import 'src/screens/product_list_screen.dart';
 import 'src/screens/main_layout.dart';
@@ -13,6 +14,7 @@ import 'src/providers/dashboard_provider.dart';
 import 'src/theme/app_theme.dart';
 
 void main() {
+  WidgetsFlutterBinding.ensureInitialized();
   runApp(
     MultiProvider(
       providers: [
@@ -37,10 +39,10 @@ class SmapApp extends StatelessWidget {
           title: 'SMAP Mobile',
           debugShowCheckedModeBanner: false,
           theme: SmapTheme.getDynamicTheme(auth.config),
-          initialRoute: '/',
+          home: const AuthGate(),
           routes: {
-            '/': (context) => const LoadingScreen(),
             '/login': (context) => const LoginScreen(),
+            '/home': (context) => const HomeScreen(),
             '/dashboard': (context) => const MainLayout(),
             '/products': (context) => const ProductListScreen(),
             '/checkout': (context) => const CheckoutScreen(),
