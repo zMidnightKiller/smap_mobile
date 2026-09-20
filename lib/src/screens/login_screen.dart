@@ -104,12 +104,13 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   void _fillDemoCredentials(Map<String, String> credential) {
+    // Nota: não chamar _formKey.reset() aqui — isso reverteria os campos para o
+    // valor inicial (vazio) e apagaria o texto recém-preenchido.
     setState(() {
       _emailController.text = credential['email'] ?? '';
       _passwordController.text = credential['senha'] ?? '';
       _submitted = false;
     });
-    _formKey.currentState?.reset();
   }
 
   @override
