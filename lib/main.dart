@@ -3,11 +3,8 @@ import 'package:provider/provider.dart';
 import 'src/providers/auth_provider.dart';
 import 'src/providers/cart_provider.dart';
 import 'src/screens/auth_gate.dart';
-import 'src/screens/login_screen.dart';
-import 'src/screens/home_screen.dart';
 import 'src/providers/product_provider.dart';
 import 'src/screens/product_list_screen.dart';
-import 'src/screens/main_layout.dart';
 import 'src/screens/success_screen.dart';
 import 'src/screens/checkout_screen.dart';
 import 'src/providers/dashboard_provider.dart';
@@ -41,9 +38,7 @@ class SmapApp extends StatelessWidget {
           theme: SmapTheme.getDynamicTheme(auth.config),
           home: const AuthGate(),
           routes: {
-            '/login': (context) => const LoginScreen(),
-            '/home': (context) => const HomeScreen(),
-            '/dashboard': (context) => const MainLayout(),
+            // Fluxo de PDV legado (será reconstruído nos itens 6–8 do roadmap).
             '/products': (context) => const ProductListScreen(),
             '/checkout': (context) => const CheckoutScreen(),
             '/success': (context) => const SuccessScreen(),

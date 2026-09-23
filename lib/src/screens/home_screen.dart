@@ -19,17 +19,14 @@ class HomeScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: SmapTheme.backgroundColor,
       appBar: AppBar(
-        title: const Text('SMAP'),
+        title: const Text('Perfil'),
         actions: [
           IconButton(
             tooltip: 'Sair',
             icon: const Icon(Icons.logout_rounded),
-            onPressed: () async {
-              await auth.logout();
-              if (context.mounted) {
-                Navigator.of(context).pushReplacementNamed('/login');
-              }
-            },
+            // O AuthGate volta para o Login automaticamente ao observar o
+            // logout no AuthProvider — sem navegação manual.
+            onPressed: () => auth.logout(),
           ),
         ],
       ),

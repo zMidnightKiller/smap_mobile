@@ -86,9 +86,9 @@ class _LoginScreenState extends State<LoginScreen> {
     final success = await auth.login(email, _passwordController.text);
     if (!mounted) return;
 
-    if (success) {
-      Navigator.of(context).pushReplacementNamed('/home');
-    } else {
+    if (!success) {
+      // Em caso de sucesso, o AuthGate reconstrói para o AppShell
+      // automaticamente ao observar a mudança de estado do AuthProvider.
       final message = auth.errorMessage ?? 'Não foi possível entrar.';
       ScaffoldMessenger.of(context)
         ..hideCurrentSnackBar()

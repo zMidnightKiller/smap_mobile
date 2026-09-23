@@ -7,7 +7,7 @@ class Produto {
   final int qtdVariacoes;
   final bool ativo;
 
-  Produto({
+  const Produto({
     required this.id,
     required this.nome,
     required this.codigoInterno,

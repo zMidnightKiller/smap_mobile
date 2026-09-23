@@ -4,7 +4,7 @@ import 'package:provider/provider.dart';
 
 import '../providers/auth_provider.dart';
 import '../theme/app_theme.dart';
-import 'home_screen.dart';
+import 'app_shell.dart';
 import 'login_screen.dart';
 
 /// Porta de entrada do app: inicializa a camada offline (pré-carga da base),
@@ -32,7 +32,7 @@ class _AuthGateState extends State<AuthGate> {
     if (!auth.isBootstrapped) {
       return const _SplashView();
     }
-    return auth.isAuthenticated ? const HomeScreen() : const LoginScreen();
+    return auth.isAuthenticated ? const AppShell() : const LoginScreen();
   }
 }
 
