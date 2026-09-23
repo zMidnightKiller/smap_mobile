@@ -34,9 +34,9 @@ class ComingSoonScreen extends StatelessWidget {
                 height: 88,
                 width: 88,
                 decoration: BoxDecoration(
-                  color: SmapTheme.primaryColor.withValues(alpha: 0.12),
+                  color: SmapTheme.primaryColor.withValues(alpha: 0.10),
                   shape: BoxShape.circle,
-                  border: Border.all(color: SmapTheme.primaryColor.withValues(alpha: 0.3)),
+                  border: Border.all(color: SmapTheme.primaryColor.withValues(alpha: 0.25)),
                 ),
                 child: Icon(icon, size: 42, color: SmapTheme.primaryColor),
               ),
@@ -47,7 +47,7 @@ class ComingSoonScreen extends StatelessWidget {
                 style: GoogleFonts.outfit(
                   fontSize: 24,
                   fontWeight: FontWeight.w700,
-                  color: Colors.white,
+                  color: SmapTheme.textColor,
                 ),
               ),
               const SizedBox(height: 12),

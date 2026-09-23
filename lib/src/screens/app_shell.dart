@@ -66,7 +66,14 @@ class _SmapBottomBar extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: SmapTheme.surfaceColor,
-        border: Border(top: BorderSide(color: Colors.white.withValues(alpha: 0.06))),
+        border: const Border(top: BorderSide(color: SmapTheme.borderColor)),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF101828).withValues(alpha: 0.06),
+            blurRadius: 16,
+            offset: const Offset(0, -4),
+          ),
+        ],
       ),
       child: SafeArea(
         top: false,

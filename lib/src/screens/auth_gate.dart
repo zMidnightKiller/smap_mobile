@@ -60,7 +60,7 @@ class _SplashView extends StatelessWidget {
                 fontSize: 30,
                 fontWeight: FontWeight.w800,
                 letterSpacing: 6,
-                color: Colors.white,
+                color: SmapTheme.textColor,
               ),
             ),
             const SizedBox(height: 24),

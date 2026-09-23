@@ -8,8 +8,8 @@ import '../data/local/smap_seed_data.dart';
 import '../providers/auth_provider.dart';
 import '../theme/app_theme.dart';
 
-/// Tela de login reconstruída do zero com foco em UX, segurança e suporte
-/// offline. Faz parte do espelhamento do SMAP web/win no mobile.
+/// Tela de login estilo fintech (clara): reconstruída do zero com foco em UX,
+/// segurança e suporte offline. Faz parte do espelhamento do SMAP web/win.
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
@@ -96,16 +96,12 @@ class _LoginScreenState extends State<LoginScreen> {
           SnackBar(
             content: Text(message),
             backgroundColor: SmapTheme.errorColor,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           ),
         );
     }
   }
 
   void _fillDemoCredentials(Map<String, String> credential) {
-    // Nota: não chamar _formKey.reset() aqui — isso reverteria os campos para o
-    // valor inicial (vazio) e apagaria o texto recém-preenchido.
     setState(() {
       _emailController.text = credential['email'] ?? '';
       _passwordController.text = credential['senha'] ?? '';
@@ -116,13 +112,14 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: SmapTheme.backgroundColor,
       body: Stack(
         children: [
-          const _AuroraBackground(),
+          const _BrandBackdrop(),
           SafeArea(
             child: Center(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 28),
                 child: ConstrainedBox(
                   constraints: const BoxConstraints(maxWidth: 420),
                   child: Column(
@@ -130,11 +127,10 @@ class _LoginScreenState extends State<LoginScreen> {
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       _buildConnectivityBanner(),
-                      const SizedBox(height: 16),
                       _buildHeader(),
-                      const SizedBox(height: 32),
-                      _buildForm(),
-                      const SizedBox(height: 24),
+                      const SizedBox(height: 28),
+                      _buildFormCard(),
+                      const SizedBox(height: 16),
                       _buildDemoHint(),
                     ],
                   ),
@@ -153,32 +149,29 @@ class _LoginScreenState extends State<LoginScreen> {
       valueListenable: auth.isOnline,
       builder: (context, online, _) {
         if (online) return const SizedBox.shrink();
-        return Semantics(
-          liveRegion: true,
-          label: 'Você está offline. O login usará a base local do SMAP.',
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-            decoration: BoxDecoration(
-              color: SmapTheme.accentColor.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: SmapTheme.accentColor.withValues(alpha: 0.4)),
-            ),
-            child: Row(
-              children: [
-                const Icon(Icons.cloud_off_rounded, size: 18, color: SmapTheme.accentColor),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Text(
-                    'Modo offline — usando a base local do SMAP',
-                    style: TextStyle(
-                      color: SmapTheme.accentColor,
-                      fontWeight: FontWeight.w600,
-                      fontSize: 13,
-                    ),
+        return Container(
+          margin: const EdgeInsets.only(bottom: 16),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+          decoration: BoxDecoration(
+            color: SmapTheme.accentColor.withValues(alpha: 0.10),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: SmapTheme.accentColor.withValues(alpha: 0.4)),
+          ),
+          child: Row(
+            children: [
+              const Icon(Icons.cloud_off_rounded, size: 18, color: SmapTheme.accentColor),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  'Modo offline — usando a base local do SMAP',
+                  style: TextStyle(
+                    color: SmapTheme.accentColor,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 13,
                   ),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         );
       },
@@ -189,25 +182,25 @@ class _LoginScreenState extends State<LoginScreen> {
     return Column(
       children: [
         Container(
-          height: 72,
-          width: 72,
-          decoration: SmapTheme.gradientDecoration(borderRadius: 22),
-          child: const Icon(Icons.insights_rounded, color: Colors.white, size: 38),
+          height: 68,
+          width: 68,
+          decoration: SmapTheme.gradientDecoration(borderRadius: 20),
+          child: const Icon(Icons.account_balance_wallet_rounded, color: Colors.white, size: 34),
         ),
-        const SizedBox(height: 20),
+        const SizedBox(height: 18),
         Text(
           'SMAP',
           textAlign: TextAlign.center,
           style: GoogleFonts.outfit(
-            fontSize: 34,
+            fontSize: 30,
             fontWeight: FontWeight.w800,
-            letterSpacing: 6,
-            color: Colors.white,
+            letterSpacing: 4,
+            color: SmapTheme.textColor,
           ),
         ),
-        const SizedBox(height: 6),
+        const SizedBox(height: 4),
         Text(
-          'Acesse sua gestão em qualquer lugar',
+          'Sua gestão na palma da mão',
           textAlign: TextAlign.center,
           style: TextStyle(color: SmapTheme.textSecondaryColor, fontSize: 14),
         ),
@@ -215,159 +208,170 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  Widget _buildForm() {
+  Widget _buildFormCard() {
     final auth = context.watch<AuthProvider>();
     final isLoading = auth.isLoading;
 
-    return Form(
-      key: _formKey,
-      autovalidateMode:
-          _submitted ? AutovalidateMode.onUserInteraction : AutovalidateMode.disabled,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          TextFormField(
-            controller: _emailController,
-            focusNode: _emailFocus,
-            enabled: !isLoading,
-            keyboardType: TextInputType.emailAddress,
-            textInputAction: TextInputAction.next,
-            autofillHints: const [AutofillHints.username, AutofillHints.email],
-            style: const TextStyle(color: Colors.white),
-            decoration: const InputDecoration(
-              labelText: 'E-mail',
-              hintText: 'voce@empresa.com',
-              prefixIcon: Icon(Icons.alternate_email_rounded, size: 20),
-            ),
-            validator: _validateEmail,
-            onFieldSubmitted: (_) => _passwordFocus.requestFocus(),
-          ),
-          const SizedBox(height: 18),
-          TextFormField(
-            controller: _passwordController,
-            focusNode: _passwordFocus,
-            enabled: !isLoading,
-            obscureText: _obscurePassword,
-            textInputAction: TextInputAction.done,
-            autofillHints: const [AutofillHints.password],
-            style: const TextStyle(color: Colors.white),
-            decoration: InputDecoration(
-              labelText: 'Senha',
-              prefixIcon: const Icon(Icons.lock_outline_rounded, size: 20),
-              suffixIcon: IconButton(
-                tooltip: _obscurePassword ? 'Mostrar senha' : 'Ocultar senha',
-                icon: Icon(
-                  _obscurePassword
-                      ? Icons.visibility_off_rounded
-                      : Icons.visibility_rounded,
-                  size: 20,
-                ),
-                onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+    return Container(
+      padding: const EdgeInsets.all(22),
+      decoration: SmapTheme.cardDecoration(borderRadius: 24),
+      child: Form(
+        key: _formKey,
+        autovalidateMode:
+            _submitted ? AutovalidateMode.onUserInteraction : AutovalidateMode.disabled,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              'Entrar',
+              style: GoogleFonts.outfit(
+                fontSize: 22,
+                fontWeight: FontWeight.w700,
+                color: SmapTheme.textColor,
               ),
             ),
-            validator: _validatePassword,
-            onFieldSubmitted: (_) => _handleLogin(),
-          ),
-          const SizedBox(height: 8),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Flexible(
-                child: InkWell(
-                  borderRadius: BorderRadius.circular(8),
-                  onTap: isLoading
-                      ? null
-                      : () => setState(() => _rememberEmail = !_rememberEmail),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 4),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        SizedBox(
-                          height: 24,
-                          width: 24,
-                          child: Checkbox(
-                            value: _rememberEmail,
-                            onChanged: isLoading
-                                ? null
-                                : (v) => setState(() => _rememberEmail = v ?? false),
+            const SizedBox(height: 18),
+            TextFormField(
+              controller: _emailController,
+              focusNode: _emailFocus,
+              enabled: !isLoading,
+              keyboardType: TextInputType.emailAddress,
+              textInputAction: TextInputAction.next,
+              autofillHints: const [AutofillHints.username, AutofillHints.email],
+              style: const TextStyle(color: SmapTheme.textColor),
+              decoration: const InputDecoration(
+                labelText: 'E-mail',
+                hintText: 'voce@empresa.com',
+                prefixIcon: Icon(Icons.alternate_email_rounded, size: 20),
+              ),
+              validator: _validateEmail,
+              onFieldSubmitted: (_) => _passwordFocus.requestFocus(),
+            ),
+            const SizedBox(height: 16),
+            TextFormField(
+              controller: _passwordController,
+              focusNode: _passwordFocus,
+              enabled: !isLoading,
+              obscureText: _obscurePassword,
+              textInputAction: TextInputAction.done,
+              autofillHints: const [AutofillHints.password],
+              style: const TextStyle(color: SmapTheme.textColor),
+              decoration: InputDecoration(
+                labelText: 'Senha',
+                prefixIcon: const Icon(Icons.lock_outline_rounded, size: 20),
+                suffixIcon: IconButton(
+                  tooltip: _obscurePassword ? 'Mostrar senha' : 'Ocultar senha',
+                  icon: Icon(
+                    _obscurePassword
+                        ? Icons.visibility_off_rounded
+                        : Icons.visibility_rounded,
+                    size: 20,
+                  ),
+                  onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+                ),
+              ),
+              validator: _validatePassword,
+              onFieldSubmitted: (_) => _handleLogin(),
+            ),
+            const SizedBox(height: 6),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Flexible(
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(8),
+                    onTap: isLoading
+                        ? null
+                        : () => setState(() => _rememberEmail = !_rememberEmail),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 4),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          SizedBox(
+                            height: 24,
+                            width: 24,
+                            child: Checkbox(
+                              value: _rememberEmail,
+                              onChanged: isLoading
+                                  ? null
+                                  : (v) => setState(() => _rememberEmail = v ?? false),
+                            ),
                           ),
-                        ),
-                        const SizedBox(width: 8),
-                        const Text('Lembrar e-mail',
-                            style: TextStyle(color: SmapTheme.textSecondaryColor)),
-                      ],
+                          const SizedBox(width: 8),
+                          const Text('Lembrar e-mail',
+                              style: TextStyle(color: SmapTheme.textSecondaryColor)),
+                        ],
+                      ),
                     ),
                   ),
                 ),
-              ),
-              TextButton(
-                onPressed: isLoading ? null : _showRecoverInfo,
-                child: const Text('Esqueci a senha'),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          SizedBox(
-            height: 56,
-            child: ElevatedButton(
-              onPressed: isLoading ? null : _handleLogin,
-              child: isLoading
-                  ? const SizedBox(
-                      height: 24,
-                      width: 24,
-                      child: CircularProgressIndicator(
-                          color: Colors.white, strokeWidth: 2.4),
-                    )
-                  : const Text('Entrar'),
+                TextButton(
+                  onPressed: isLoading ? null : _showRecoverInfo,
+                  child: const Text('Esqueci a senha'),
+                ),
+              ],
             ),
-          ),
-        ],
+            const SizedBox(height: 12),
+            SizedBox(
+              height: 54,
+              child: ElevatedButton(
+                onPressed: isLoading ? null : _handleLogin,
+                child: isLoading
+                    ? const SizedBox(
+                        height: 22,
+                        width: 22,
+                        child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.4),
+                      )
+                    : const Text('Entrar'),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 
   Widget _buildDemoHint() {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.04),
+        color: SmapTheme.primaryColor.withValues(alpha: 0.06),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
+        border: Border.all(color: SmapTheme.primaryColor.withValues(alpha: 0.15)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              const Icon(Icons.vpn_key_rounded,
-                  size: 16, color: SmapTheme.textSecondaryColor),
+              const Icon(Icons.vpn_key_rounded, size: 16, color: SmapTheme.primaryColor),
               const SizedBox(width: 8),
               Text(
                 'Acesso de demonstração (offline)',
                 style: TextStyle(
-                  color: SmapTheme.textSecondaryColor,
+                  color: SmapTheme.primaryDark,
                   fontWeight: FontWeight.w600,
                   fontSize: 13,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 8),
           ...SmapSeedData.demoCredentials.map(
             (cred) => Padding(
-              padding: const EdgeInsets.only(bottom: 6),
+              padding: const EdgeInsets.only(top: 4),
               child: InkWell(
                 borderRadius: BorderRadius.circular(10),
                 onTap: () => _fillDemoCredentials(cred),
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 8),
+                  padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
                   child: Row(
                     children: [
                       Expanded(
                         child: Text(
                           '${cred['perfil']} · ${cred['email']}',
-                          style: const TextStyle(color: Colors.white, fontSize: 13),
+                          style: const TextStyle(color: SmapTheme.textColor, fontSize: 13),
                         ),
                       ),
                       const Icon(Icons.arrow_forward_ios_rounded,
@@ -388,20 +392,17 @@ class _LoginScreenState extends State<LoginScreen> {
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
       ..showSnackBar(
-        SnackBar(
-          content: const Text(
-              'Recuperação de senha é feita pelo administrador do SMAP.'),
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        const SnackBar(
+          content: Text('Recuperação de senha é feita pelo administrador do SMAP.'),
         ),
       );
   }
 }
 
-/// Fundo decorativo suave e performático (sem animações pesadas) para dar
-/// profundidade à tela mantendo a legibilidade.
-class _AuroraBackground extends StatelessWidget {
-  const _AuroraBackground();
+/// Fundo claro com um leve halo da cor de marca no topo, dando profundidade sem
+/// comprometer a legibilidade (padrão fintech).
+class _BrandBackdrop extends StatelessWidget {
+  const _BrandBackdrop();
 
   @override
   Widget build(BuildContext context) {
@@ -410,14 +411,14 @@ class _AuroraBackground extends StatelessWidget {
       child: Stack(
         children: [
           Positioned(
-            top: -120,
-            right: -80,
-            child: _blurCircle(260, SmapTheme.primaryColor.withValues(alpha: 0.22)),
+            top: -140,
+            right: -60,
+            child: _blurCircle(260, SmapTheme.primaryColor.withValues(alpha: 0.12)),
           ),
           Positioned(
-            bottom: -100,
+            top: 40,
             left: -90,
-            child: _blurCircle(240, SmapTheme.secondaryColor.withValues(alpha: 0.16)),
+            child: _blurCircle(220, SmapTheme.accentColor.withValues(alpha: 0.10)),
           ),
         ],
       ),

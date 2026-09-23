@@ -8,9 +8,9 @@ import '../providers/dashboard_provider.dart';
 import '../theme/app_theme.dart';
 import '../utils/formatters.dart';
 
-/// Dashboard (Início) do SMAP: faturamento, vendas, ticket médio, série dos
-/// últimos 7 dias, formas de pagamento e top produtos. Todos os números são
-/// calculados a partir da base local — funciona offline.
+/// Dashboard (Início) do SMAP no estilo fintech claro: faturamento, vendas,
+/// ticket médio, série dos últimos 7 dias, formas de pagamento e top produtos.
+/// Todos os números são calculados a partir da base local — funciona offline.
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key, this.onNovaVenda});
 
@@ -48,13 +48,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
             padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
             children: [
               _Header(auth: auth),
-              const SizedBox(height: 24),
+              const SizedBox(height: 20),
               _BalanceCard(
                 faturamento: resumo.faturamentoHoje,
                 isLoading: dashboard.isLoading && !dashboard.loadedOnce,
                 onVender: widget.onNovaVenda,
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 18),
               Row(
                 children: [
                   Expanded(
@@ -109,14 +109,14 @@ class _Header extends StatelessWidget {
     return Row(
       children: [
         CircleAvatar(
-          radius: 26,
-          backgroundColor: SmapTheme.primaryColor.withValues(alpha: 0.2),
+          radius: 24,
+          backgroundColor: SmapTheme.primaryColor.withValues(alpha: 0.12),
           child: Text(
             user?.initials ?? '?',
             style: GoogleFonts.outfit(
-              color: Colors.white,
+              color: SmapTheme.primaryColor,
               fontWeight: FontWeight.bold,
-              fontSize: 18,
+              fontSize: 16,
             ),
           ),
         ),
@@ -131,9 +131,9 @@ class _Header extends StatelessWidget {
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: GoogleFonts.outfit(
-                  fontSize: 20,
+                  fontSize: 19,
                   fontWeight: FontWeight.w700,
-                  color: Colors.white,
+                  color: SmapTheme.textColor,
                 ),
               ),
             ],
@@ -159,15 +159,14 @@ class _ConnectivityChip extends StatelessWidget {
         return Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
           decoration: BoxDecoration(
-            color: color.withValues(alpha: 0.12),
+            color: color.withValues(alpha: 0.10),
             borderRadius: BorderRadius.circular(999),
-            border: Border.all(color: color.withValues(alpha: 0.4)),
+            border: Border.all(color: color.withValues(alpha: 0.35)),
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(offline ? Icons.cloud_off_rounded : Icons.cloud_done_rounded,
-                  size: 14, color: color),
+              Icon(offline ? Icons.cloud_off_rounded : Icons.cloud_done_rounded, size: 14, color: color),
               const SizedBox(width: 6),
               Text(
                 offline ? 'Offline' : 'Online',
@@ -191,8 +190,8 @@ class _BalanceCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      decoration: SmapTheme.gradientDecoration(borderRadius: 26),
-      padding: const EdgeInsets.all(24),
+      decoration: SmapTheme.gradientDecoration(borderRadius: 24),
+      padding: const EdgeInsets.all(22),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -202,7 +201,7 @@ class _BalanceCard extends StatelessWidget {
               fontSize: 12,
               fontWeight: FontWeight.w600,
               color: Colors.white.withValues(alpha: 0.85),
-              letterSpacing: 1.4,
+              letterSpacing: 1.2,
             ),
           ),
           const SizedBox(height: 10),
@@ -225,7 +224,7 @@ class _BalanceCard extends StatelessWidget {
                     color: Colors.white,
                   ),
                 ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 22),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -254,13 +253,7 @@ class _QuickAction extends StatelessWidget {
       onTap: onTap ??
           () => ScaffoldMessenger.of(context)
             ..hideCurrentSnackBar()
-            ..showSnackBar(
-              SnackBar(
-                content: Text('"$label" em breve'),
-                behavior: SnackBarBehavior.floating,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              ),
-            ),
+            ..showSnackBar(SnackBar(content: Text('"$label" em breve'))),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
         child: Column(
@@ -268,7 +261,7 @@ class _QuickAction extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.18),
+                color: Colors.white.withValues(alpha: 0.22),
                 shape: BoxShape.circle,
               ),
               child: Icon(icon, color: Colors.white, size: 22),
@@ -294,25 +287,21 @@ class _MetricTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.04),
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
-      ),
+      decoration: SmapTheme.cardDecoration(borderRadius: 18),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
             padding: const EdgeInsets.all(9),
             decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.14),
+              color: color.withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Icon(icon, color: color, size: 20),
           ),
           const SizedBox(height: 14),
           Text(value,
-              style: GoogleFonts.outfit(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white)),
+              style: GoogleFonts.outfit(fontSize: 20, fontWeight: FontWeight.bold, color: SmapTheme.textColor)),
           const SizedBox(height: 2),
           Text(label, style: TextStyle(color: SmapTheme.textSecondaryColor, fontSize: 12)),
         ],
@@ -331,9 +320,9 @@ class _SectionTitle extends StatelessWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(title, style: GoogleFonts.outfit(fontSize: 17, fontWeight: FontWeight.w700, color: Colors.white)),
+        Text(title, style: GoogleFonts.outfit(fontSize: 17, fontWeight: FontWeight.w700, color: SmapTheme.textColor)),
         if (trailing != null)
-          Text(trailing!, style: TextStyle(color: SmapTheme.primaryColor, fontWeight: FontWeight.w700)),
+          Text(trailing!, style: const TextStyle(color: SmapTheme.primaryColor, fontWeight: FontWeight.w700)),
       ],
     );
   }
@@ -348,17 +337,11 @@ class _WeeklyChart extends StatelessWidget {
     final maxTotal = serie.fold<double>(0, (m, d) => d.total > m ? d.total : m);
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 20, 16, 12),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.04),
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
-      ),
+      decoration: SmapTheme.cardDecoration(borderRadius: 18),
       child: SizedBox(
         height: 150,
         child: serie.isEmpty
-            ? Center(
-                child: Text('Sem dados', style: TextStyle(color: SmapTheme.textSecondaryColor)),
-              )
+            ? Center(child: Text('Sem dados', style: TextStyle(color: SmapTheme.textSecondaryColor)))
             : Row(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -373,10 +356,7 @@ class _WeeklyChart extends StatelessWidget {
                           d.total >= 1000
                               ? '${(d.total / 1000).toStringAsFixed(1)}k'
                               : d.total.toStringAsFixed(0),
-                          style: TextStyle(
-                            color: SmapTheme.textSecondaryColor,
-                            fontSize: 9,
-                          ),
+                          style: TextStyle(color: SmapTheme.textSecondaryColor, fontSize: 9),
                         ),
                         const SizedBox(height: 4),
                         Container(
@@ -389,8 +369,8 @@ class _WeeklyChart extends StatelessWidget {
                               colors: isToday
                                   ? [SmapTheme.primaryColor, SmapTheme.secondaryColor]
                                   : [
-                                      SmapTheme.primaryColor.withValues(alpha: 0.5),
-                                      SmapTheme.primaryColor.withValues(alpha: 0.25),
+                                      SmapTheme.primaryColor.withValues(alpha: 0.35),
+                                      SmapTheme.primaryColor.withValues(alpha: 0.18),
                                     ],
                             ),
                             borderRadius: BorderRadius.circular(6),
@@ -400,7 +380,7 @@ class _WeeklyChart extends StatelessWidget {
                         Text(
                           diaSemanaCurto(d.dia),
                           style: TextStyle(
-                            color: isToday ? Colors.white : SmapTheme.textSecondaryColor,
+                            color: isToday ? SmapTheme.primaryColor : SmapTheme.textSecondaryColor,
                             fontSize: 11,
                             fontWeight: isToday ? FontWeight.bold : FontWeight.normal,
                           ),
@@ -414,8 +394,7 @@ class _WeeklyChart extends StatelessWidget {
     );
   }
 
-  bool _isSameDay(DateTime a, DateTime b) =>
-      a.year == b.year && a.month == b.month && a.day == b.day;
+  bool _isSameDay(DateTime a, DateTime b) => a.year == b.year && a.month == b.month && a.day == b.day;
 }
 
 class _PaymentBreakdown extends StatelessWidget {
@@ -437,8 +416,8 @@ class _PaymentBreakdown extends StatelessWidget {
   static const _colors = {
     'DINHEIRO': SmapTheme.accentColor,
     'CARTAO': SmapTheme.primaryColor,
-    'PIX': Color(0xFF8B5CF6),
-    'PRAZO': SmapTheme.secondaryColor,
+    'PIX': Color(0xFF7C3AED),
+    'PRAZO': Color(0xFFF79009),
   };
 
   @override
@@ -452,11 +431,7 @@ class _PaymentBreakdown extends StatelessWidget {
 
     return Container(
       padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.04),
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
-      ),
+      decoration: SmapTheme.cardDecoration(borderRadius: 18),
       child: Column(
         children: entries.map((e) {
           final ratio = total == 0 ? 0.0 : e.value / total;
@@ -471,10 +446,10 @@ class _PaymentBreakdown extends StatelessWidget {
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(_labels[e.key] ?? e.key,
-                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
+                          style: const TextStyle(color: SmapTheme.textColor, fontWeight: FontWeight.w600)),
                     ),
                     Text(formatMoeda(e.value),
-                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
+                        style: const TextStyle(color: SmapTheme.textColor, fontWeight: FontWeight.w600)),
                     const SizedBox(width: 8),
                     Text('${(ratio * 100).round()}%',
                         style: TextStyle(color: color, fontSize: 12, fontWeight: FontWeight.bold)),
@@ -486,7 +461,7 @@ class _PaymentBreakdown extends StatelessWidget {
                   child: LinearProgressIndicator(
                     value: ratio,
                     minHeight: 7,
-                    backgroundColor: Colors.white.withValues(alpha: 0.05),
+                    backgroundColor: SmapTheme.borderColor,
                     valueColor: AlwaysStoppedAnimation(color),
                   ),
                 ),
@@ -500,10 +475,7 @@ class _PaymentBreakdown extends StatelessWidget {
 
   Widget _emptyCard(String message) => Container(
         padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.04),
-          borderRadius: BorderRadius.circular(18),
-        ),
+        decoration: SmapTheme.cardDecoration(borderRadius: 18),
         child: Center(child: Text(message, style: TextStyle(color: SmapTheme.textSecondaryColor))),
       );
 }
@@ -517,38 +489,31 @@ class _TopProdutos extends StatelessWidget {
     if (itens.isEmpty) {
       return Container(
         padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.04),
-          borderRadius: BorderRadius.circular(18),
-        ),
+        decoration: SmapTheme.cardDecoration(borderRadius: 18),
         child: Center(child: Text('Sem vendas no período', style: TextStyle(color: SmapTheme.textSecondaryColor))),
       );
     }
     return Container(
       padding: const EdgeInsets.all(8),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.04),
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
-      ),
+      decoration: SmapTheme.cardDecoration(borderRadius: 18),
       child: Column(
         children: List.generate(itens.length, (i) {
           final p = itens[i];
           return ListTile(
             leading: CircleAvatar(
               radius: 16,
-              backgroundColor: SmapTheme.primaryColor.withValues(alpha: 0.15),
+              backgroundColor: SmapTheme.primaryColor.withValues(alpha: 0.12),
               child: Text('${i + 1}',
-                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13)),
+                  style: const TextStyle(color: SmapTheme.primaryColor, fontWeight: FontWeight.bold, fontSize: 13)),
             ),
             title: Text(p.nome,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 14)),
+                style: const TextStyle(color: SmapTheme.textColor, fontWeight: FontWeight.w600, fontSize: 14)),
             subtitle: Text('${formatNumero(p.quantidade)} un.',
                 style: TextStyle(color: SmapTheme.textSecondaryColor, fontSize: 12)),
             trailing: Text(formatMoeda(p.receita),
-                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
+                style: const TextStyle(color: SmapTheme.textColor, fontWeight: FontWeight.w700)),
           );
         }),
       ),
