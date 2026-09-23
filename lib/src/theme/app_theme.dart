@@ -6,9 +6,9 @@ import 'package:google_fonts/google_fonts.dart';
 /// cor de marca (roxo) e verde para valores positivos.
 class SmapTheme {
   // Marca
-  static const Color primaryColor = Color(0xFF7C3AED); // Roxo (marca)
-  static const Color primaryDark = Color(0xFF6D28D9);
-  static const Color secondaryColor = Color(0xFF9E77ED); // Roxo claro (gradiente)
+  static const Color primaryColor = Color(0xFF2E90FA); // Azul claro (marca)
+  static const Color primaryDark = Color(0xFF1570EF);
+  static const Color secondaryColor = Color(0xFF53B1FD); // Azul mais claro (gradiente)
   static const Color accentColor = Color(0xFF12B76A); // Verde (positivo/dinheiro)
 
   // Superfícies claras

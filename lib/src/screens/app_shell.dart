@@ -4,6 +4,7 @@ import '../theme/app_theme.dart';
 import 'coming_soon_screen.dart';
 import 'dashboard_screen.dart';
 import 'home_screen.dart';
+import 'products_screen.dart';
 
 /// Estrutura de navegação principal do SMAP (barra inferior), espelhando o app
 /// web/win. Cada aba é reconstruída como funcionalidade offline-first ao longo
@@ -22,13 +23,7 @@ class _AppShellState extends State<AppShell> {
 
   late final List<Widget> _tabs = [
     DashboardScreen(onNovaVenda: () => _goTo(2)),
-    const ComingSoonScreen(
-      title: 'Produtos',
-      icon: Icons.inventory_2_rounded,
-      description:
-          'Catálogo com busca, estoque e variações — carregado da base local do SMAP.',
-      roadmapStep: 'Próximo no roadmap (5)',
-    ),
+    const ProductsScreen(),
     const ComingSoonScreen(
       title: 'Nova Venda (PDV)',
       icon: Icons.point_of_sale_rounded,
@@ -135,7 +130,7 @@ class _CenterButton extends StatelessWidget {
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
               gradient: const LinearGradient(
-                colors: [SmapTheme.primaryColor, Color(0xFFA855F7)],
+                colors: [SmapTheme.primaryColor, SmapTheme.secondaryColor],
               ),
               shape: BoxShape.circle,
               boxShadow: [

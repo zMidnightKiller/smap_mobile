@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'src/providers/auth_provider.dart';
 import 'src/providers/cart_provider.dart';
+import 'src/providers/catalog_provider.dart';
 import 'src/screens/auth_gate.dart';
 import 'src/providers/product_provider.dart';
 import 'src/screens/product_list_screen.dart';
@@ -19,6 +20,7 @@ void main() {
         ChangeNotifierProvider(create: (_) => ProductProvider()),
         ChangeNotifierProvider(create: (_) => CartProvider()),
         ChangeNotifierProvider(create: (_) => DashboardProvider()),
+        ChangeNotifierProvider(create: (_) => CatalogProvider()),
       ],
       child: const SmapApp(),
     ),
