@@ -67,13 +67,23 @@ class DashboardRepository {
     return _store = CatalogLocalStore(db.db);
   }
 
-  /// Pré-carrega catálogo e vendas caso a base esteja vazia.
+  /// Pré-carrega catálogo e vendas caso a base esteja vazia. As vendas de
+  /// demonstração são regeneradas quando ficam defasadas (virada de dia),
+  /// mantendo o Dashboard realista até existir sincronização real.
   Future<void> bootstrap() async {
     final store = await _catalog();
     if (await store.produtosCount() == 0) {
       await store.upsertProdutos(_seed.produtos());
     }
-    if (await store.vendasCount() == 0) {
+
+    final ultima = await store.ultimaVendaData();
+    final now = DateTime.now();
+    final hoje = DateTime(now.year, now.month, now.day);
+    if (ultima == null) {
+      await store.upsertVendas(_seed.vendas());
+    } else if (ultima.isBefore(hoje)) {
+      // Base de demonstração defasada: substitui a janela de vendas seed.
+      await store.deleteVendasSeed();
       await store.upsertVendas(_seed.vendas());
     }
   }

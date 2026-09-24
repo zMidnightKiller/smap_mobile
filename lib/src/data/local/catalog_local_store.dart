@@ -54,6 +54,27 @@ class CatalogLocalStore {
     });
   }
 
+  /// Data da venda mais recente (ou nulo se não houver vendas).
+  Future<DateTime?> ultimaVendaData() async {
+    final records = await _vendas.find(
+      _db,
+      finder: Finder(sortOrders: [SortOrder('data', false)], limit: 1),
+    );
+    if (records.isEmpty) return null;
+    return DateTime.tryParse(records.first.value['data'] as String);
+  }
+
+  /// Remove apenas as vendas de demonstração (prefixo `v-`), preservando vendas
+  /// reais criadas pelo PDV.
+  Future<void> deleteVendasSeed() async {
+    final records = await _vendas.find(_db);
+    final seedKeys =
+        records.map((r) => r.key).where((k) => k.startsWith('v-')).toList();
+    if (seedKeys.isNotEmpty) {
+      await _vendas.records(seedKeys).delete(_db);
+    }
+  }
+
   Map<String, dynamic> _produtoToMap(Produto p) => {
         'id_produto': p.id,
         'nome': p.nome,
