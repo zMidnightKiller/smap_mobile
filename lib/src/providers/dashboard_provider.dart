@@ -1,35 +1,33 @@
-import 'dart:convert';
-import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
+import 'package:flutter/foundation.dart';
 
+import '../data/repositories/dashboard_repository.dart';
+
+/// Estado do Dashboard, alimentado pela base local (offline-first).
 class DashboardProvider with ChangeNotifier {
-  Map<String, dynamic>? _resumo;
+  DashboardProvider({DashboardRepository? repository})
+      : _repository = repository ?? DashboardRepository();
+
+  final DashboardRepository _repository;
+
+  DashboardResumo _resumo = DashboardResumo.empty;
   bool _isLoading = false;
+  bool _loadedOnce = false;
 
-  Map<String, dynamic>? get resumo => _resumo;
+  DashboardResumo get resumo => _resumo;
   bool get isLoading => _isLoading;
+  bool get loadedOnce => _loadedOnce;
 
-  Future<void> fetchResumo(String token, String baseUrl) async {
+  Future<void> load() async {
     _isLoading = true;
     notifyListeners();
-
     try {
-      final response = await http.get(
-        Uri.parse('$baseUrl/dashboard/resumo'),
-        headers: {
-          'Authorization': 'Bearer $token',
-        },
-      );
-
-      if (response.statusCode == 200) {
-        _resumo = jsonDecode(response.body);
-      } else {
-        debugPrint('Dashboard error: ${response.statusCode}');
-      }
+      await _repository.bootstrap();
+      _resumo = await _repository.resumo();
     } catch (e) {
-      debugPrint('Dashboard exception: $e');
+      debugPrint('DashboardProvider.load erro: $e');
     } finally {
       _isLoading = false;
+      _loadedOnce = true;
       notifyListeners();
     }
   }

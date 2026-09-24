@@ -1,85 +1,121 @@
-import 'dart:convert';
-import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter/foundation.dart';
 
+import '../data/models/smap_user.dart';
+import '../data/remote/smap_api.dart';
+import '../data/repositories/auth_repository.dart';
+import '../security/secure_session_store.dart';
+import '../services/connectivity_service.dart';
+
+enum AuthStatus { unknown, unauthenticated, authenticating, authenticated }
+
+/// Fonte de verdade da autenticação para a UI.
+///
+/// Delega a lógica offline-first ao [AuthRepository] e expõe um estado simples
+/// e reativo para as telas. Mantém compatibilidade com o restante do app
+/// através dos getters [baseUrl], [token] e [config].
 class AuthProvider with ChangeNotifier {
-  String? _token;
+  AuthProvider({AuthRepository? repository, ConnectivityService? connectivity})
+      : _repository = repository ?? AuthRepository(),
+        _connectivity = connectivity ?? ConnectivityService();
+
+  final AuthRepository _repository;
+  final ConnectivityService _connectivity;
+
+  AuthStatus _status = AuthStatus.unknown;
+  SmapUser? _currentUser;
+  SmapSession? _session;
+  String? _errorMessage;
   bool _isLoading = false;
-  Map<String, dynamic>? _user;
-  Map<String, dynamic>? _config;
+  bool _bootstrapped = false;
 
-  bool get isAuthenticated => _token != null;
-  String? get token => _token;
+  AuthStatus get status => _status;
+  SmapUser? get currentUser => _currentUser;
+  bool get isAuthenticated => _status == AuthStatus.authenticated;
   bool get isLoading => _isLoading;
-  Map<String, dynamic>? get user => _user;
-  Map<String, dynamic>? get config => _config;
+  bool get isBootstrapped => _bootstrapped;
+  String? get errorMessage => _errorMessage;
 
-  // IP do servidor (Web usa localhost)
-  final String baseUrl = 'http://localhost:8000/api'; 
+  /// Sessão validada offline (contra a base local) em vez do servidor.
+  bool get isOfflineSession => _session?.offline ?? false;
 
-  // OWASP Mobile M3: Insecure Communication
-  String get _secureBaseUrl {
-    // Para facilitar o desenvolvimento, permitimos HTTP em IPs de rede local ou emuladores
-    return baseUrl;
+  /// Estado de conectividade observável para a UI (indicador online/offline).
+  ValueListenable<bool> get isOnline => _connectivity.isOnline;
+
+  // Compatibilidade com providers/telas existentes.
+  String get baseUrl => _repository.baseUrl;
+  String? get token => _session?.token;
+  Map<String, dynamic>? get config => _repository.config;
+
+  /// Inicializa a camada local (pré-carga da base), conectividade e restaura
+  /// uma sessão previamente salva. Idempotente.
+  Future<void> bootstrap() async {
+    if (_bootstrapped) return;
+    await _repository.bootstrap();
+    await _connectivity.initialize();
+    final restored = await _repository.restoreSession();
+    if (restored != null) {
+      _applyOutcome(restored);
+    } else {
+      _status = AuthStatus.unauthenticated;
+    }
+    _bootstrapped = true;
+    notifyListeners();
   }
 
   Future<bool> login(String email, String password) async {
     _isLoading = true;
+    _errorMessage = null;
+    _status = AuthStatus.authenticating;
     notifyListeners();
 
     try {
-      final response = await http.post(
-        Uri.parse('$_secureBaseUrl/auth/login'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'email': email, 'password': password}),
-      );
-
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        _token = data['access_token'];
-        
-        // OWASP Mobile M2: Insecure Data Storage
-        // NOTA: Para produção, considere usar o pacote flutter_secure_storage 
-        // para criptografar o token no dispositivo.
-        final prefs = await SharedPreferences.getInstance();
-        await prefs.setString('token', _token!);
-        
-        await fetchConfig();
-        _isLoading = false;
-        notifyListeners();
-        return true;
-      } else {
-        debugPrint('Auth error: ${response.statusCode}');
-      }
+      final outcome = await _repository.login(email, password);
+      _applyOutcome(outcome);
+      _isLoading = false;
+      notifyListeners();
+      return true;
+    } on AuthException catch (e) {
+      _fail(e.message);
+      return false;
     } catch (e) {
-      // OWASP Mobile M10: Improper Logging
-      // Evitamos logar segredos ou detalhes internos em produção
-      debugPrint('Connection error'); 
-    }
-
-    _isLoading = false;
-    notifyListeners();
-    return false;
-  }
-
-  Future<void> fetchConfig() async {
-    try {
-      final response = await http.get(Uri.parse('$baseUrl/public/config'));
-      if (response.statusCode == 200) {
-        _config = jsonDecode(response.body);
-        notifyListeners();
-      }
-    } catch (e) {
-      debugPrint('Config error: $e');
+      debugPrint('AuthProvider.login erro inesperado: $e');
+      _fail('Erro inesperado ao entrar. Tente novamente.');
+      return false;
     }
   }
 
   Future<void> logout() async {
-    _token = null;
-    _user = null;
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.remove('token');
+    await _repository.logout();
+    _currentUser = null;
+    _session = null;
+    _errorMessage = null;
+    _status = AuthStatus.unauthenticated;
     notifyListeners();
+  }
+
+  void clearError() {
+    if (_errorMessage == null) return;
+    _errorMessage = null;
+    notifyListeners();
+  }
+
+  void _applyOutcome(AuthOutcome outcome) {
+    _currentUser = outcome.user;
+    _session = outcome.session;
+    _errorMessage = null;
+    _status = AuthStatus.authenticated;
+  }
+
+  void _fail(String message) {
+    _errorMessage = message;
+    _isLoading = false;
+    _status = AuthStatus.unauthenticated;
+    notifyListeners();
+  }
+
+  @override
+  void dispose() {
+    _connectivity.dispose();
+    super.dispose();
   }
 }
